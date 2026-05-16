@@ -1,1 +1,772 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Manutenzioni">
+<meta name="theme-color" content="#1a5fa8">
+<title>Manutenzioni Macchine V4 Sync</title>
+<style>
+:root{--blue:#1a5fa8;--blue-light:#e0eeff;--blue-dark:#154e8c;--amber:#8a5c00;--amber-light:#fff3d8;--red:#c0392b;--red-light:#fde8e6;--border:#e5e7eb;--border-strong:#d1d5db;--text:#111827;--text-muted:#6b7280;--text-light:#9ca3af;--bg:#f9fafb;--card:#ffffff;--gray-light:#f3f4f6;--radius:12px;--radius-sm:8px;--shadow:0 1px 3px rgba(0,0,0,0.08)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.5}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:600px;margin:0 auto;position:relative;background:var(--card);box-shadow:0 0 40px rgba(0,0,0,0.08)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1)}
+.screen.active{transform:translateX(0)}
+.screen.prev{transform:translateX(-30%)}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:5}
+.topbar-title{font-size:17px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px}
+.topbar-sub{font-size:12px;color:var(--text-muted);margin-top:-1px}
+.btn-icon{width:36px;height:36px;border-radius:50%;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:18px;flex-shrink:0}
+.btn-icon:active{background:var(--gray-light)}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.content::-webkit-scrollbar{display:none}
+.search-wrap{padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--gray-light);border-radius:10px;padding:8px 12px}
+.search-box input{border:none;background:none;font-size:15px;color:var(--text);flex:1;outline:none}
+.section-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;padding:14px 16px 6px}
+.vlist{padding:0 12px 8px;display:flex;flex-direction:column;gap:6px}
+.vcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.vcard:active{transform:scale(.98);background:var(--gray-light)}
+.vcard-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.vcard-body{flex:1;min-width:0}
+.vcard-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
+.vcard-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.scard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin:0 12px 8px;box-shadow:var(--shadow);overflow:hidden}
+.scard-head{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.scard-date{font-weight:600;font-size:15px;letter-spacing:-.2px}
+.scard-ore{font-size:12px;color:var(--text-muted);margin-top:2px}
+.scard-body{padding:8px 14px}
+.op-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.op-item:last-child{border-bottom:none}
+.op-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:6px}
+.op-content{flex:1;min-width:0}
+.op-desc{font-size:14px;line-height:1.4}
+.op-nota{font-size:12px;color:var(--text-muted);margin-top:2px}
+.op-codice{display:inline-block;font-size:11px;font-weight:500;color:var(--amber);background:var(--amber-light);padding:2px 7px;border-radius:20px;margin-top:3px}
+.scard-note{padding:6px 0 4px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 16px;font-size:14px;font-weight:500;cursor:pointer;background:none;color:var(--text);transition:all .15s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:active{background:var(--blue-dark)}
+.btn-danger{color:var(--red);border-color:transparent;background:var(--red-light)}
+.btn-warning{color:var(--amber);border-color:transparent;background:var(--amber-light)}
+.btn-ghost{border-color:transparent;color:var(--blue)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.arow{display:flex;gap:5px;flex-shrink:0}
+.tabbar{background:var(--card);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);flex-shrink:0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px;cursor:pointer;border:none;background:none;color:var(--text-muted);font-size:10px;font-weight:500;gap:3px;transition:color .15s}
+.tab.on{color:var(--blue)}
+.tab-icon{font-size:23px;line-height:1}
+.form-block{background:var(--card);border-bottom:1px solid var(--border)}
+.form-row{padding:12px 16px}
+.form-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:15px;color:var(--text);background:var(--card);outline:none;font-family:inherit;transition:border-color .15s}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,95,168,.1)}
+.form-input::placeholder{color:var(--text-light)}
+textarea.form-input{resize:vertical;min-height:72px}
+.dsec{height:10px;background:var(--gray-light);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ops-grid{display:flex;flex-direction:column;gap:4px}
+.op-check{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;background:var(--bg)}
+.op-check.sel{border-color:var(--blue);background:var(--blue-light)}
+.chkbox{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--card);transition:all .15s}
+.op-check.sel .chkbox{background:var(--blue);border-color:var(--blue);color:#fff}
+.op-check-name{flex:1;font-size:14px;font-weight:500}
+.op-check-code{font-size:11px;font-weight:600;color:var(--text-muted);background:var(--gray-light);padding:2px 7px;border-radius:20px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:600px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:12px;letter-spacing:-.3px}
+.modal-fields{display:flex;flex-direction:column;gap:10px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1;justify-content:center;padding:12px}
+.opcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.op-code-pill{background:var(--blue-light);color:var(--blue);font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;flex-shrink:0;min-width:48px;text-align:center}
+.stats-bar{display:flex;gap:10px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+.stat{flex:1;background:var(--gray-light);border-radius:10px;padding:10px 12px;text-align:center}
+.stat-val{font-size:18px;font-weight:700;color:var(--blue);letter-spacing:-.5px}
+.stat-label{font-size:10px;color:var(--text-muted);margin-top:1px}
+.empty{text-align:center;padding:60px 24px;color:var(--text-muted)}
+.empty-icon{font-size:52px;margin-bottom:12px;opacity:.6}
+.toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:rgba(17,24,39,.9);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.sync-wrap{padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+.sync-box{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--blue-light);border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px}
+.sync-left{display:flex;align-items:center;gap:8px;min-width:0}
+.sync-dot{width:10px;height:10px;border-radius:50%;background:var(--text-light);flex-shrink:0}
+.sync-dot.ok{background:#16a34a}.sync-dot.warn{background:#d97706}.sync-dot.err{background:#dc2626}
+.sync-text{font-size:13px;font-weight:600;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sync-btn{border:none;border-radius:9px;background:var(--blue);color:#fff;font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;flex-shrink:0}
+.sync-btn:active{background:var(--blue-dark)}
+.ic-trattore{background:#dbeafe}.ic-irroratrice{background:#dcfce7}.ic-giretta{background:#fef9c3}.ic-carro{background:#fee2e2}.ic-muletto{background:#f3e8ff}.ic-furgone{background:#e0f2fe}.ic-auto{background:#fce7f3}.ic-camion{background:#f1f5f9}
 
+.add-savebar{
+  position:sticky;
+  bottom:0;
+  background:var(--card);
+  border-top:1px solid var(--border);
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+  display:flex;
+  gap:10px;
+  z-index:20;
+}
+.add-savebar .btn{
+  flex:1;
+  justify-content:center;
+  padding:13px 14px;
+  font-size:15px;
+  border-radius:12px;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="screen active" id="sHome">
+  <div class="topbar">
+    <div style="flex:1"><div class="topbar-title">🚜 Manutenzioni V4 Sync</div></div>
+    <button class="btn btn-primary btn-sm" id="btnGoVehicles">Mezzi</button>
+  </div>
+  <div class="sync-wrap">
+    <div class="sync-box">
+      <div class="sync-left">
+        <span id="sync-dot" class="sync-dot"></span>
+        <span id="sync-status" class="sync-text">Sincronizzazione Google: avvio...</span>
+      </div>
+      <button class="sync-btn" type="button" onclick="forzaSincronizzazione()">SYNC</button>
+    </div>
+  </div>
+  <div class="search-wrap"><div class="search-box"><span style="font-size:15px;color:var(--text-light)">🔍</span><input id="homeQ" placeholder="Cerca macchina..." oninput="renderHome()"></div></div>
+  <div class="content" id="homeContent"></div>
+  <div class="tabbar">
+    <button class="tab on" id="tab1" onclick="switchTab(0)"><span class="tab-icon">🏠</span>Macchine</button>
+    <button class="tab" id="tab2" onclick="switchTab(1)"><span class="tab-icon">🔧</span>Operazioni</button>
+    <button class="tab" onclick="renderVehicles();navTo('sVehicles')"><span class="tab-icon">⚙️</span>Mezzi</button>
+  </div>
+</div>
+
+<div class="screen" id="sOps">
+  <div class="topbar">
+    <button class="btn-icon" onclick="switchTab(0)">◀</button>
+    <div style="flex:1"><div class="topbar-title">Catalogo Operazioni</div></div>
+    <button class="btn-icon" id="btnAddOp">＋</button>
+  </div>
+  <div class="search-wrap"><div class="search-box"><span style="font-size:15px;color:var(--text-light)">🔍</span><input id="opsQ" placeholder="Cerca operazione..." oninput="renderOps()"></div></div>
+  <div class="content" id="opsContent"></div>
+  <div class="tabbar">
+    <button class="tab" onclick="switchTab(0)"><span class="tab-icon">🏠</span>Macchine</button>
+    <button class="tab on"><span class="tab-icon">🔧</span>Operazioni</button>
+    <button class="tab" onclick="renderVehicles();navTo('sVehicles')"><span class="tab-icon">⚙️</span>Mezzi</button>
+  </div>
+</div>
+
+<div class="screen" id="sVehicles">
+  <div class="topbar">
+    <button class="btn-icon" id="btnBackVehicles">◀</button>
+    <div style="flex:1"><div class="topbar-title">Gestione Mezzi</div></div>
+    <button class="btn-icon" id="btnAddVehicle">＋</button>
+  </div>
+  <div class="content" id="vehiclesContent"></div>
+</div>
+
+<div class="screen" id="sDetail">
+  <div class="topbar">
+    <button class="btn-icon" id="btnBackDetail">◀</button>
+    <div style="flex:1">
+      <div class="topbar-title" id="detailName"></div>
+      <div class="topbar-sub" id="detailMeta"></div>
+    </div>
+    <button class="btn-icon" id="btnAddSession">＋</button>
+  </div>
+  <div id="statsBar" class="stats-bar"></div>
+  <div class="content" id="detailContent"></div>
+</div>
+
+<div class="screen" id="sAdd">
+  <div class="topbar">
+    <button class="btn btn-warning btn-sm" id="btnCancelAdd">Annulla</button>
+    <div class="topbar-title" style="flex:1" id="addTitle">Nuovo Intervento</div>
+    <button class="btn btn-primary btn-sm" id="btnSaveSession">Salva</button>
+  </div>
+  <div class="content" id="addContent"></div>
+</div>
+
+</div><!-- /app -->
+
+<!-- CONFIRM -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <div class="modal-title" id="confirmTitle"></div>
+    <div style="font-size:14px;color:var(--text-muted);line-height:1.6;white-space:pre-line" id="confirmMsg"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-danger" id="confirmBtn">Elimina</button>
+    </div>
+  </div>
+</div>
+
+<!-- OP MODAL -->
+<div class="modal-overlay" id="opModal">
+  <div class="modal">
+    <div class="modal-title" id="opModalTitle">Nuova Operazione</div>
+    <div class="modal-fields">
+      <div><div class="form-label">CODICE (es. OLM)</div><input class="form-input" id="opCode" placeholder="es. OLM" maxlength="8"></div>
+      <div><div class="form-label">DESCRIZIONE</div><input class="form-input" id="opName" placeholder="es. CAMBIO OLIO MOTORE"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" id="opSaveBtn">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- VEHICLE MODAL -->
+<div class="modal-overlay" id="vModal">
+  <div class="modal">
+    <div class="modal-title" id="vModalTitle">Nuovo Mezzo</div>
+    <div class="modal-fields">
+      <div><div class="form-label">NOME MEZZO</div><input class="form-input" id="vName" placeholder="es. FIAT 100-90"></div>
+      <div><div class="form-label">TIPO</div>
+        <select class="form-input" id="vType">
+          <option value="trattore">🚜 Trattore</option>
+          <option value="irroratrice">🌿 Irroratrice</option>
+          <option value="giretta">🔄 Giretta</option>
+          <option value="carro">🚛 Carro</option>
+          <option value="muletto">🏭 Muletto</option>
+          <option value="furgone">🚐 Furgone</option>
+          <option value="auto">🚗 Auto</option>
+          <option value="camion">🚚 Camion</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" id="vSaveBtn">Salva</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TICO={trattore:'🚜',irroratrice:'🌿',giretta:'🔄',carro:'🚛',muletto:'🏭',furgone:'🚐',auto:'🚗',camion:'🚚'};
+const TNAME={trattore:'Trattori',irroratrice:'Irroratrici',giretta:'Girette',carro:'Carri',muletto:'Muletti',furgone:'Furgoni',auto:'Auto',camion:'Camion'};
+const TORD=['trattore','irroratrice','giretta','carro','muletto','furgone','auto','camion'];
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbwBWeNjZmXw_l8C--CGeLAcXZoDSbUj7pkEoFdSgDuO2DXZ0P7gqdDzIaEd_ldjum-c/exec';
+</script>
+<script id="dataScript">
+</script>
+<script>
+// runtime state
+let ST={vehicles:[],operations:[],sessions:[]};
+let curVid=null,editSid=null,editOpId=null,editVid=null;
+let selOps=[],custOps=[],navStack=[];
+
+const DEF_V=[{"id":"v1","name":"FIAT 35-66","type":"trattore"},{"id":"v2","name":"FIAT 55-76 MULETTO","type":"trattore"},{"id":"v3","name":"TNF95 NEW HOLLAND","type":"trattore"},{"id":"v4","name":"TN55 NEW HOLLAND","type":"trattore"},{"id":"v5","name":"T4 95 NEW HOLLAND","type":"trattore"},{"id":"v6","name":"550","type":"trattore"},{"id":"v7","name":"FIAT 300","type":"trattore"},{"id":"v8","name":"666","type":"trattore"},{"id":"v9","name":"ANDREOLI FANTINI","type":"irroratrice"},{"id":"v10","name":"GIRETTA NUOVA AZIENDA","type":"giretta"},{"id":"v11","name":"GIRETTA VECCHIA TURRINI","type":"giretta"},{"id":"v12","name":"SAME FRUTTETO","type":"trattore"},{"id":"v13","name":"SAME ASTER 70","type":"trattore"},{"id":"v14","name":"SAME MINITAURO 70","type":"trattore"},{"id":"v15","name":"CARRO TURRINI","type":"carro"},{"id":"v16","name":"CARRO RACCOLTA BRUCIORE","type":"carro"},{"id":"v17","name":"CARRO RACCOLTA GRANDE","type":"carro"},{"id":"v18","name":"LINDE H30D","type":"muletto"},{"id":"v19","name":"OM40","type":"camion"},{"id":"v20","name":"DUCATO","type":"furgone"},{"id":"v21","name":"CAMPAGNOLA","type":"auto"},{"id":"v22","name":"FIAT 415","type":"trattore"}];
+const DEF_OPS=[{id:'op1',code:'OLM',name:'CAMBIO OLIO MOTORE'},{id:'op2',code:'FOM',name:'CAMBIO FILTRO OLIO MOTORE'},{id:'op3',code:'FGA',name:'CAMBIO FILTRO GASOLIO'},{id:'op4',code:'IGR',name:'INGRASSATA TOTALE'},{id:'op5',code:'BAT',name:'CAMBIO BATTERIA'},{id:'op6',code:'FAR',name:'CAMBIO FILTRO ARIA'},{id:'op7',code:'CAL',name:'CAMBIO CINGHIA ALTERNATORE'},{id:'op8',code:'OLT',name:'CAMBIO OLIO TRASMISSIONE'},{id:'op9',code:'FCM',name:'CAMBIO FILTRO CAMBIO'},{id:'op10',code:'OIH',name:'RABBOCCO OLIO IDRAULICO'},{id:'op11',code:'OID',name:'CAMBIO OLIO IDRAULICO'},{id:'op12',code:'PAF',name:'PULIZIA FILTRO ARIA'},{id:'op13',code:'RAD',name:'PULIZIA RADIATORE'},{id:'op14',code:'FCO',name:'CAMBIO FILTRO OLIO CAMBIO'},{id:'op15',code:'ALT',name:'CAMBIO ALTERNATORE'},{id:'op16',code:'CDI',name:'CAMBIO CINGHIA DISTRIBUZIONE'},{id:'op17',code:'RAB',name:'RABBOCCO OLIO MOTORE'},{id:'op18',code:'GLI',name:'CAMBIO GLICOLE/PARAFLU'},{id:'op19',code:'REV',name:'REVISIONE MOTORE'},{id:'op20',code:'MOT',name:'CAMBIO MOTORE'},{id:'op21',code:'LAV',name:'LAVAGGIO MOTORE CON ADDITIVO'},{id:'op22',code:'ADD',name:'ADDITIVO GASOLIO'},{id:'op23',code:'FID',name:'CAMBIO FILTRO IDRAULICO'},{id:'op24',code:'POM',name:'CAMBIO POMPA'},{id:'op25',code:'VEN',name:'CAMBIO VENTOLA RADIATORE'}];
+const DEF_S=[{"id":"s1","vehicleId":"v1","data":"2014-05-04","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"}],"note":""},{"id":"s2","vehicleId":"v1","data":"2020-03-18","ore":5387,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"CAMBIO POMPA C"},{"descrizione":"CAMBIO ALTERNATORE"},{"descrizione":"CAMBIO VENTOLA RADIATORE"},{"descrizione":"CAMBIO BULBO OLIO MOTORE"},{"descrizione":"CAMBIO CINGHIA ALTERNATORE"},{"descrizione":"CAMBIO CAVO  DI MASSA -"},{"descrizione":"CAMBIO TUBO GASOLIO POMPA C"}],"note":""},{"id":"s3","vehicleId":"v1","data":"2022-02-14","ore":5670,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"REVISIONE POMPE INIEZIONE N3"},{"descrizione":"LAVAGGIO MOTORE CON ADITTIVO"},{"descrizione":"OLIO SPECIALE PER OLIO 15/40"}],"note":""},{"id":"s4","vehicleId":"v1","data":"2023-04-18","ore":5857,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"LAVAGGIO MOTORE CON ADITTIVO"},{"descrizione":"OLIO SPECIALE PER OLIO 15/40"}],"note":""},{"id":"s5","vehicleId":"v1","data":"2024-05-07","ore":5955,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO MOTORE","nota":"ORIGINALE"},{"descrizione":"CAMBIO OLIO MOTORE","nota":"OLIO NILS MISTRAL 15/40"},{"descrizione":"LAVAGGIO MOTORE CON ADITTIVO"}],"note":""},{"id":"s6","vehicleId":"v1","data":"2026-03-30","ore":6145,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE","nota":"TAMOIL 15/40"},{"descrizione":"LAVAGGIO MOTORE CON ADITTIVO"},{"descrizione":"CAMBIO OLIO IDROGUIDA","nota":"MULTI K 10-30"}],"note":""},{"id":"s7","vehicleId":"v2","data":"2010-05-08","ore":2631,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"CAMBIO FILTRO MOTORE"},{"descrizione":"CAMBIO OLIO IDROGUIDA"}],"note":""},{"id":"s8","vehicleId":"v2","data":"2014-05-04","ore":3061,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"CAMBIO BATTERIA"},{"descrizione":"PULIZIA FILTRO ARIA"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s9","vehicleId":"v2","data":"2016-08-30","ore":3358,"operazioni":[{"descrizione":"CAMBIO TUBO RADIATORE"},{"descrizione":"ACQUA BATTERIA"},{"descrizione":"OLIO IDROGUIDA"},{"descrizione":"PULIZIA FILTRO ARIA"},{"descrizione":"PULIZIA RADIATORE"}],"note":""},{"id":"s10","vehicleId":"v2","data":"2021-11-04","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"PEDALE FRIZIONE"}],"note":""},{"id":"s11","vehicleId":"v2","data":"2025-06-04","ore":4289,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE"},{"descrizione":"CAMBIO FILTRO GASOLIO UFI"},{"descrizione":"DFC PLUS ADD. PER GASOLIO"},{"descrizione":"FILTRO ARIA GOVI"},{"descrizione":"CAMBIO PARAFLU RADIATORE"},{"descrizione":"CAMBIO FILTRO OLIO MULETTO"},{"descrizione":"CAMBIO OLIO MULETTO"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s12","vehicleId":"v3","data":"2010-06-07","ore":800,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 LT 10,50"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s13","vehicleId":"v3","data":"2011-05-04","ore":1100,"operazioni":[{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s14","vehicleId":"v3","data":"2011-06-26","ore":1117,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 LT 9,5","nota":"1617.0"}],"note":""},{"id":"s15","vehicleId":"v3","data":"2012-03-07","ore":1569,"operazioni":[{"descrizione":"RABBOCCO OLIO TRASMISSIONE LT 6"}],"note":""},{"id":"s16","vehicleId":"v3","data":"2013-05-10","ore":1569,"operazioni":[{"descrizione":"CAMBIO ALBERO SOLLEVATORE + GUARNIZIONI+CUSCINETTI"},{"descrizione":"CAMBIO OLIO TRASMISSIONE"},{"descrizione":"CAMBIO OLIO MOTORE","nota":"2000.0"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO TRASMISS."},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CONTROLLO PRESSIONI GOMME 1,5 BAR"}],"note":""},{"id":"s17","vehicleId":"v3","data":"2014-05-21","ore":null,"operazioni":[{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s18","vehicleId":"v3","data":"2015-05-26","ore":1910,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s19","vehicleId":"v3","data":"2016-07-16","ore":2100,"operazioni":[{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s20","vehicleId":"v3","data":"2017-05-04","ore":2220,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"}],"note":""},{"id":"s21","vehicleId":"v3","data":"2020-03-13","ore":2854,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"Cambio filtro gasolio"},{"descrizione":"RABBOCCO OLIO TRASMISSIONE"}],"note":""},{"id":"s22","vehicleId":"v3","data":"2020-12-12","ore":3100,"operazioni":[{"descrizione":"CAMBIO SUPER STIR TOTALE ORIGINALE"}],"note":""},{"id":"s23","vehicleId":"v3","data":"2022-04-05","ore":3357,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"CAMBIO FILTRO GASOLIO ORIGINALE"},{"descrizione":"BG 109E EPR PULIZIA IMPIANTO MOTORE 1 BARATTOLO"}],"note":""},{"id":"s24","vehicleId":"v3","data":"2022-04-06","ore":3357,"operazioni":[{"descrizione":"CAMBIO OLIO MOZZI ANTERIORI RUOTE 80/90"},{"descrizione":"CAMBIO BATTERIA"}],"note":""},{"id":"s25","vehicleId":"v3","data":"2023-03-08","ore":3600,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"Sistemazione luci posteriori e targa"}],"note":""},{"id":"s26","vehicleId":"v3","data":"2023-05-08","ore":3650,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO CAMBIO ORIGINALE"}],"note":""},{"id":"s27","vehicleId":"v3","data":"2024-05-13","ore":3840,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"BG PN 109E EPR PULIZIA IMPIANTO MOTORE 1 BARATTOLO"}],"note":""},{"id":"s28","vehicleId":"v3","data":"2025-07-24","ore":4138,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"BG PN 2426 AD.DISEL"},{"descrizione":"CAMBIO FILTRO GASOLIO ORIGINALE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO OLIO MOZZI RUOTE ANTERIORE"}],"note":""},{"id":"s29","vehicleId":"v3","data":"2026-03-11","ore":4235,"operazioni":[{"descrizione":"CAMBIO OLIO TRASMISSIONE AMADESSI"},{"descrizione":"CAMBIO FILTRO OLIO CAMBIO ORIGINALE AMADESSI"},{"descrizione":"CAMBIO OR POMPA C AMADESSI"}],"note":""},{"id":"s30","vehicleId":"v3","data":"2026-04-17","ore":4262,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"FILTRI ESTERNI CARBONI ATTIVI"},{"descrizione":"CAMBIO FILTRO GASOLIO ORIGINALE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"FILTRI ARIA INTERNO CABINA"},{"descrizione":"FILTRI ARIA INTERNO CABINA"}],"note":""},{"id":"s31","vehicleId":"v4","data":"2011-03-16","ore":176,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"CAMBIO FILTRO CARBURANTE"},{"descrizione":"CAMBIO FILTRO MOTORE"},{"descrizione":"CAMBIO FILTRO CAMBIO"}],"note":""},{"id":"s32","vehicleId":"v4","data":"2014-05-20","ore":517,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s33","vehicleId":"v4","data":"2018-07-06","ore":863,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"CAMBIO FILTRO CAMBIO"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s34","vehicleId":"v4","data":"2020-03-13","ore":1118,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"CAMBIO FILTRO olio motore"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO FILTRO CARBURANTE"}],"note":""},{"id":"s35","vehicleId":"v4","data":"2022-04-04","ore":1619,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"CAMBIO FILTRO olio motore","nota":"ORIGINALE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO FILTRO CARBURANTE","nota":"ORIGINALE"},{"descrizione":"CABIO TUBO IDROGUIDA"},{"descrizione":"FILTRO ARIA","nota":"MANN"},{"descrizione":"BG PN109E SOLVENTE PER OLIO MOTORE"},{"descrizione":"DOC DISEL OIL (PER OLIO)"}],"note":""},{"id":"s36","vehicleId":"v4","data":"2023-03-17","ore":1906,"operazioni":[{"descrizione":"LAVAGGIO PULIVAPOR"},{"descrizione":"OK SPAZZAVETRI"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s37","vehicleId":"v4","data":"2023-04-19","ore":1963,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"CAMBIO FILTRO olio motore","nota":"ORIGINALE"}],"note":""},{"id":"s38","vehicleId":"v4","data":"2024-05-14","ore":2296,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"CAMBIO FILTRO olio motore","nota":"ORIGINALE 84222017"},{"descrizione":"BG PN109E SOLVENTE PER OLIO MOTORE"}],"note":""},{"id":"s39","vehicleId":"v4","data":"2025-06-05","ore":2692,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO OLIO MOTORE","nota":"AMBRA MASTERGOLD ORE 500"},{"descrizione":"CAMBIO FILTRO olio motore","nota":"ORIGINALE 84222017"},{"descrizione":"CAMBIO FILTRO GASOLIO ORIGINALE","nota":"ORIGINALE 84214564"},{"descrizione":"CAMBIO PARAFLU RADIATORE"},{"descrizione":"FILTRO ARIA ORIGINALE","nota":"ORIGINALE 87704249"}],"note":""},{"id":"s40","vehicleId":"v5","data":"2023-03-01","ore":2200,"operazioni":[{"descrizione":"CLERICI CAMBIO OLIO MOTORE","nota":"MASTERGOLD 15/40"}],"note":""},{"id":"s41","vehicleId":"v5","data":"2023-03-01","ore":1700,"operazioni":[{"descrizione":"CLERICI CAMBIO OLIO TRASMISSIONE","nota":"MULTI G"}],"note":""},{"id":"s42","vehicleId":"v5","data":"2023-03-22","ore":2381,"operazioni":[{"descrizione":"REVISIONE CAMA"}],"note":""},{"id":"s43","vehicleId":"v5","data":"2023-03-23","ore":2381,"operazioni":[{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s44","vehicleId":"v5","data":"2024-05-21","ore":2688,"operazioni":[{"descrizione":"CAMBIO OLIO 15/40","nota":"MASTERGOLD 15/40"},{"descrizione":"CAMBIO FILTRO ORIGINALE","nota":"84475545"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s45","vehicleId":"v5","data":"2025-05-09","ore":2935,"operazioni":[{"descrizione":"ARIA CONDIZIONATA BULBO REGOLAZIONE"},{"descrizione":"CAMBIO OLIO CAMBIO","nota":"MULTI G"},{"descrizione":"CAMBIO FILTRO ORIGINALE CAMBIO AMADESSI"},{"descrizione":"CAMBIO FILTRO ORIGINALE AILO AMADESSI"},{"descrizione":"TARATURA FRIZIONE AMADESSI"},{"descrizione":"CAMBIO OLIO MOZZI RUOTE ANTERIORE","nota":"MULTI G"}],"note":""},{"id":"s46","vehicleId":"v5","data":"2025-06-05","ore":2935,"operazioni":[{"descrizione":"CAMBIO FILTRO GASOLIO ORIGINALE","nota":"ORIGINALE 84565884"}],"note":""},{"id":"s47","vehicleId":"v5","data":"2025-07-24","ore":3030,"operazioni":[{"descrizione":"CAMBIO OLIO 15/40","nota":"MASTERGOLD 15/40"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE","nota":"84475545"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s48","vehicleId":"v5","data":"2026-04-20","ore":3145,"operazioni":[{"descrizione":"CAMBIO FILTRO GASOLIO ORIGINALE","nota":"ORIGINALE 84565884"},{"descrizione":"CAMBIO OLIO 15/40","nota":"MASTERGOLD 15/40"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE","nota":"84475545"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"FILTRO ARIA MOTORE GRANDE"},{"descrizione":"FILTRO ARIA MOTORE PICCOLO"}],"note":""},{"id":"s49","vehicleId":"v6","data":"2012-02-18","ore":null,"operazioni":[{"descrizione":"CAMBIO BATTERIA"}],"note":""},{"id":"s50","vehicleId":"v6","data":"2018-07-06","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"}],"note":""},{"id":"s51","vehicleId":"v7","data":"2021-04-03","ore":"","operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"OLIO NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO","nota":"ORIGINALE GIACENZA MAG."},{"descrizione":"TUBI RADIATORE"},{"descrizione":"ALTERNATORE"},{"descrizione":"BATTERIA"},{"descrizione":"PORTA FUSIBILE"},{"descrizione":"GLICOLE NUOVO"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"SOSTITUITI CAVO EL.+/- E MORSETTI"}],"note":""},{"id":"s52","vehicleId":"v8","data":"2011-03-16","ore":4978,"operazioni":[{"descrizione":"CAMBIO OLIO CAMBIO"},{"descrizione":"CAMBIO POMPA OLIO"},{"descrizione":"CAMBIO FILTRO CAMBIO"}],"note":""},{"id":"s53","vehicleId":"v8","data":"2012-08-10","ore":5577,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"}],"note":""},{"id":"s54","vehicleId":"v8","data":"2013-07-24","ore":5906,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"}],"note":""},{"id":"s55","vehicleId":"v8","data":"2015-08-11","ore":6337,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO MOTORE"}],"note":""},{"id":"s56","vehicleId":"v8","data":"2016-09-21","ore":6630,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRI GASOLIO"}],"note":""},{"id":"s57","vehicleId":"v8","data":"2017-08-01","ore":6977,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"}],"note":""},{"id":"s58","vehicleId":"v8","data":"2023-04-22","ore":7601,"operazioni":[{"descrizione":"LAVAGGIO MOTORE CON ADITTIVO"},{"descrizione":"CAMBIO FILTRO MOTORE ORIGINALE","codice":"1909101.0"},{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"CAMBIO OR POMPA OLIO TRASMISSIONE"},{"descrizione":"RABBOCCO OLIO MULTI F 20/30 LT20"}],"note":""},{"id":"s59","vehicleId":"v8","data":"2023-05-10","ore":7603,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO TRASMISSIONE","codice":"47425202.0"}],"note":""},{"id":"s60","vehicleId":"v9","data":"2012-04-11","ore":1904,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s61","vehicleId":"v9","data":"2012-06-29","ore":2093,"operazioni":[{"descrizione":"RAB. OLIO MOTORE 15/40 NORMALE"},{"descrizione":"INGRASSATA TOTALE","codice":"N 3 GUARNIZIONI COPERCHIO VALVOLE"}],"note":""},{"id":"s62","vehicleId":"v9","data":"2013-04-23","ore":2353,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s63","vehicleId":"v9","data":"2014-04-02","ore":null,"operazioni":[{"descrizione":"SOSTITUITE 2 CINGHIE POMPA POST. 1 RUOTA FERRO TENDI CINGHIA"}],"note":""},{"id":"s64","vehicleId":"v9","data":"2014-04-29","ore":2885,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"}],"note":""},{"id":"s65","vehicleId":"v9","data":"2014-04-20","ore":3019,"operazioni":[{"descrizione":"REVISIONE GRUPPO FRIZIONE VENTOLA CAMBIO OLIO 90","nota":"CONTROLLARE LIVELLO SPECULA"},{"descrizione":"SOSTITUITE 2 CINGHIE  MOTORE ARIA CONDIZIONATA"},{"descrizione":"SOSTITUITE 2 CINGHIE POMPA POST."}],"note":""},{"id":"s66","vehicleId":"v9","data":"2014-06-24","ore":3019,"operazioni":[{"descrizione":"CAMBIO FILTRO GASOLIO MOTORE"}],"note":""},{"id":"s67","vehicleId":"v9","data":"2015-05-26","ore":3362,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s68","vehicleId":"v9","data":"2015-06-09","ore":null,"operazioni":[{"descrizione":"SOSTITUZIONE 2 CINGHIE POMPA POST","nota":"GATES 6492 EXL (AVX13 X 1550 LA)"}],"note":""},{"id":"s69","vehicleId":"v9","data":"2016-07-25","ore":3880,"operazioni":[{"descrizione":"RIVISIONE TOTALE RIFATTO IL MOTORE"}],"note":""},{"id":"s70","vehicleId":"v9","data":"2017-03-24","ore":4078,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s71","vehicleId":"v9","data":"2018-03-28","ore":4492,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s72","vehicleId":"v9","data":"2019-04-01","ore":4960,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s73","vehicleId":"v9","data":"2020-12-03","ore":5350,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s74","vehicleId":"v9","data":"2020-04-29","ore":5378,"operazioni":[{"descrizione":"CAMBIO OLIO IDRAULICO","nota":"OLIO 46 IDRAULICO ALTA VISCOSITA'"},{"descrizione":"CAMBIO FILTRO IDRAULICO","nota":"ARGO HITOS V3.0724-08 EXAPOR MAX2 17904202"},{"descrizione":"MANOMETRO PRESSIONE"},{"descrizione":"FILTRO ARIA CARBONE","nota":"PANCLEAN AX4266"}],"note":""},{"id":"s75","vehicleId":"v9","data":"2020-05-16","ore":5437,"operazioni":[{"descrizione":"SOSTITUZIONE 2 CINGHIE POMPA POST","nota":"GATES 6492 EXL (AVX13 X 1550 LA)"}],"note":""},{"id":"s76","vehicleId":"v9","data":"2021-03-23","ore":5777,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"TUBO FINALE MARMITTA"},{"descrizione":"SILICONE COPERCHIO ANTERIORE"},{"descrizione":"MANOMETRO PRESSIONE"}],"note":""},{"id":"s77","vehicleId":"v9","data":"2022-04-08","ore":6217,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO NON ORIGINALE"},{"descrizione":"CAMBIO FILTRO GASOLIO MOTORE"},{"descrizione":"CAMBIO FILTRO ARIA MOTORE"},{"descrizione":"BG 109E EPR PULIZIA IMPIANTO MOTORE 1 BARATTOLO"},{"descrizione":"BG 107E ADDITIVO PER CONSUMO OLIO MOTORE 1 BARATTOLO"},{"descrizione":"BG 2476 ADDITIVO PER GASOLIO PULIZIA 1 BARATTOLO"}],"note":""},{"id":"s78","vehicleId":"v9","data":"2023-01-12","ore":6648,"operazioni":[{"descrizione":"CAMBIO MOTORINO AVVIAMENTO"},{"descrizione":"CAMBIO BATTERIA"},{"descrizione":"CAMBIO POMPA MEMBRANA (REVISIONATA)"},{"descrizione":"Cambio pompa idroguida e tubo aspirazione Massimo Amadessi"},{"descrizione":"Cambio guarnizioni canotti valvole Massimo Amadessi"},{"descrizione":"Saldata marmitta Massimo Amadessi"},{"descrizione":"Controllo olio giunti trasmissione Massimo Amadessi"},{"descrizione":"Cambio guarnizioni pistone anteriore sterzo Massimo Amadessi"}],"note":""},{"id":"s79","vehicleId":"v9","data":"2023-03-10","ore":6648,"operazioni":[{"descrizione":"Revisione totale pompa comet stefano Andreoli"},{"descrizione":"Cambio canotto riduttore e elettrofrizione stefano Andreoli"},{"descrizione":"CAMBIO FILTRO OLIO  ORIGINALE"},{"descrizione":"BG 109E EPR PULIZIA IMPIANTO MOTORE 1 BARATTOLO"},{"descrizione":"BG 107E ADDITIVO PER CONSUMO OLIO MOTORE 1 BARATTOLO"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"BG 2476 ADDITIVO PER GASOLIO PULIZIA 1 BARATTOLO"}],"note":""},{"id":"s80","vehicleId":"v9","data":"2024-05-02","ore":7048,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO  ORIGINALE"},{"descrizione":"BG 107E ADDITIVO PER CONSUMO OLIO MOTORE 1 BARATTOLO"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"BG 2476 ADDITIVO PER GASOLIO PULIZIA 1 BARATTOLO"},{"descrizione":"GRASSO TOTALE"},{"descrizione":"FANALE POSTERIORE SINISTRO"}],"note":""},{"id":"s81","vehicleId":"v9","data":"2024-06-04","ore":7120,"operazioni":[{"descrizione":"CAMBIO FILTRO GASOLIO MOTORE"},{"descrizione":"RAB. OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s82","vehicleId":"v9","data":"2025-06-05","ore":7357,"operazioni":[{"descrizione":"CAMBIO FILTRO ARIA MOTORE GOVI"},{"descrizione":"CAMBIO FILTRO GASOLIO MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"BG 2476 ADDITIVO PER GASOLIO PULIZIA 1 BARATTOLO"},{"descrizione":"GRASSO TOTALE"},{"descrizione":"LAVAGGIO RADIATORE IMPIANTO IDRAULICO"}],"note":""},{"id":"s83","vehicleId":"v10","data":"2012-04-11","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"RABBOCCO OLIO IDRAULICO"}],"note":""},{"id":"s84","vehicleId":"v10","data":"2014-05-03","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s85","vehicleId":"v10","data":"2018-04-27","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"RABBOCCO OLIO IDRAULICO"}],"note":""},{"id":"s86","vehicleId":"v10","data":"2018-04-28","ore":null,"operazioni":[{"descrizione":"REVISIONE PISTONE IDRAULICO"}],"note":""},{"id":"s87","vehicleId":"v10","data":"2020-04-08","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RABBOCCO OLIO TRASMISSIONE"}],"note":""},{"id":"s88","vehicleId":"v10","data":"2021-04-30","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RABBOCCO OLIO TRASMISSIONE"},{"descrizione":"MANUTENZIONE PEDALI SPOSTAMENTO"},{"descrizione":"REVISIONE GIRETTA NORMA"}],"note":""},{"id":"s89","vehicleId":"v10","data":"2022-02-18","ore":null,"operazioni":[{"descrizione":"ADDITIVO PER PULIZIA MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RABBOCCO OLIO IDRAULICO 46"},{"descrizione":"PULIZIA FILTRO ARIA + OLIO 10-40"}],"note":""},{"id":"s90","vehicleId":"v10","data":"2022-02-18","ore":"250ML PER 5LT GASOLIO","operazioni":[{"descrizione":"ADDITIVO PER IMPIANTO GASOLIO"}],"note":""},{"id":"s91","vehicleId":"v10","data":"2023-03-17","ore":null,"operazioni":[{"descrizione":"CAMBIO MOTORE IDRAULICO POSTERIORE 100"},{"descrizione":"RABBOCCO OLIO IDRAULICO 46"}],"note":""},{"id":"s92","vehicleId":"v10","data":"2023-04-17","ore":null,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RABBOCCO OLIO IDRAULICO 46"},{"descrizione":"CAMBIO OLIO MOTORE 15/40"}],"note":""},{"id":"s93","vehicleId":"v10","data":"2024-05-16","ore":null,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NILS MISTRAL"}],"note":""},{"id":"s94","vehicleId":"v11","data":"2018-04-27","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO 15/40"},{"descrizione":"RABBOCCO OLIO IDRAULICO"},{"descrizione":"REVISIONE PISTONE IDRAULICO"}],"note":""},{"id":"s95","vehicleId":"v11","data":"2020-04-08","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"REVISIONE GIRETTA NORMA"}],"note":""},{"id":"s96","vehicleId":"v11","data":"2021-04-30","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RABBOCCO OLIO TRASMISSIONE"},{"descrizione":"MANUTENZIONE PEDALI SPOSTAMENTO"}],"note":""},{"id":"s97","vehicleId":"v11","data":"2022-02-17","ore":null,"operazioni":[{"descrizione":"ADDITIVO PER PULIZIA MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RABBOCCO OLIO IDRAULICO 46"},{"descrizione":"PULIZIA FILTRO ARIA + OLIO 10-40"}],"note":""},{"id":"s98","vehicleId":"v11","data":"2022-02-17","ore":"250ML PER 5LT GASOLIO","operazioni":[{"descrizione":"ADDITIVO PER IMPIANTO GASOLIO"}],"note":""},{"id":"s99","vehicleId":"v11","data":"2022-02-17","ore":"CAMBIO OR","operazioni":[{"descrizione":"REVISIONE MOTORE IDRAULICO RUOTA ANTERIORE"}],"note":""},{"id":"s100","vehicleId":"v11","data":"2023-04-17","ore":null,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RABBOCCO OLIO IDRAULICO 46"},{"descrizione":"CAMBIO OLIO MOTORE 15/40"}],"note":""},{"id":"s101","vehicleId":"v11","data":"2024-05-16","ore":null,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NILS MISTRAL"},{"descrizione":"RIPARAZIONE SERBATOIO GASOLIO AT.INFERIORE"}],"note":""},{"id":"s102","vehicleId":"v12","data":"2017-05-13","ore":"","operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"OLIO NORMALE"}],"note":""},{"id":"s103","vehicleId":"v12","data":"2018-04-25","ore":4707,"operazioni":[{"descrizione":"IMPIANTO IDRAULICO DISTRIBUTORI"},{"descrizione":"CAMBIO GUARNIZIONI SOLLEVATORE"},{"descrizione":"CONTA ORE"},{"descrizione":"RABBOCCO OLIO MOTORE"}],"note":""},{"id":"s104","vehicleId":"v12","data":"2021-07-09","ore":5065,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40","nota":"OLIO NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE"},{"descrizione":"CAMBIO SENSORE LIVELLO GASOLIO"}],"note":""},{"id":"s105","vehicleId":"v12","data":"2023-03-18","ore":5140,"operazioni":[{"descrizione":"INGRASSATA TOTALE","nota":"GRASSO NILS"},{"descrizione":"LAVAGGIO PULIVAPOR"}],"note":""},{"id":"s106","vehicleId":"v12","data":"2024-05-02","ore":5354,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40","nota":"OLIO NILS MISTRAL 15/40"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE","nota":"2.4419.340.0/10"},{"descrizione":"INGRASSATA TOTALE","nota":"GRASSO NILS"},{"descrizione":"CAMBIO CUSCINETTO E BOCCOLE TRAZIONE"}],"note":""},{"id":"s107","vehicleId":"v12","data":"2025-03-21","ore":5361,"operazioni":[{"descrizione":"CAMBIO OLIO TRASMISSIONE","nota":"MULTI G 10/30 LT 30"},{"descrizione":"CAMBIO FILTRO OLIO TRASMISSIONE"},{"descrizione":"MANICOTTO GOMMA TUBO OLIO TRASMISSIONE"},{"descrizione":"CAMBIO SENSORE FILTRO OLIO TRASMI."}],"note":""},{"id":"s108","vehicleId":"v13","data":"2012-04-16","ore":4903,"operazioni":[{"descrizione":"CAMBIO GUARNIZIONE COPERCHIO VALVOLE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO"},{"descrizione":"CAMBIO FILTRO ARIA MOTORE INTERNO ESTERNO"},{"descrizione":"CAMBIO FILTRO CARBURANTE"}],"note":""},{"id":"s109","vehicleId":"v13","data":"2013-07-06","ore":5142,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s110","vehicleId":"v13","data":"2014-04-03","ore":5291,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s111","vehicleId":"v13","data":"2015-05-18","ore":5475,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s112","vehicleId":"v13","data":"2017-04-08","ore":5795,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s113","vehicleId":"v13","data":"2017-05-04","ore":5800,"operazioni":[{"descrizione":"REVISIONE TURBINA DA PELATTI"}],"note":""},{"id":"s114","vehicleId":"v13","data":"2017-05-05","ore":5800,"operazioni":[{"descrizione":"CAMBIO ALTERNATORE"}],"note":""},{"id":"s115","vehicleId":"v13","data":"2019-05-10","ore":6050,"operazioni":[{"descrizione":"CAMBIO FILTRO ARIA CABINA CARBONI"}],"note":""},{"id":"s116","vehicleId":"v13","data":"2019-05-30","ore":6092,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s117","vehicleId":"v13","data":"2021-05-05","ore":6242,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE SDF PARTS","nota":"2.4419.340.0/10"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"REGISTRAZIONE COPERCHIO VALVOLE"}],"note":""},{"id":"s118","vehicleId":"v13","data":"2022-04-05","ore":6299,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE SDF PARTS","nota":"2.4419.340.0/10"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"CAMBIO FILTRO GASOLIO ORIGINALE"},{"descrizione":"CAMBIO FILTRO ARIA NON ORIGINELE"},{"descrizione":"BG 107E RF7 ADDITIVO PER OLIO 1"},{"descrizione":"BG 109E EPR PULIZIA IMPIANTO MOTORE 1"}],"note":""},{"id":"s119","vehicleId":"v13","data":"2022-04-26","ore":6299,"operazioni":[{"descrizione":"CAMBIO GURNIZIONI SOLLEVATORE AMADESSI","nota":"800"},{"descrizione":"CAMBIO PERNI STERZO AMADESSI"},{"descrizione":"ERRORE CONTA GIRI 2500GIRI =540 CARDANO"}],"note":""},{"id":"s120","vehicleId":"v13","data":"2023-03-18","ore":6359,"operazioni":[{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"LAVAGGIO PULIVAPOR"},{"descrizione":"OK MOTORINO SPAZZAVETRO"}],"note":""},{"id":"s121","vehicleId":"v13","data":"2024-03-15","ore":6369,"operazioni":[{"descrizione":"CAMBIO OLIO CAMBIO MULTI G 10-30 AMADESSSI"},{"descrizione":"CAMBIO FILTRO CAMBIO ORIGINALE AMADESSI"},{"descrizione":"MODIFICA IMPIANTO IDRAULICO AMADESSI"},{"descrizione":"CAMBIO GUARNIZIONE COPERCHIO VALVOLE AMADESSI"}],"note":""},{"id":"s122","vehicleId":"v13","data":"2024-05-02","ore":6409,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NILS MISTRAL"},{"descrizione":"CAMBIO FILTRO OLIO ORIGINALE SDF PARTS","nota":"2.4419.340.0/10"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s123","vehicleId":"v14","data":"2020-03-24","ore":null,"operazioni":[{"descrizione":"CAMBIO POMPA C"},{"descrizione":"RIPARAZIONE LEVA MOLLA SFERA PRESA DI FORZA"}],"note":""},{"id":"s124","vehicleId":"v15","data":"2012-02-18","ore":7241,"operazioni":[{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"CAMBIO 3 CANDELETTE ACC."},{"descrizione":"CONTROLLARE DISTRIBUZIONE","nota":"5964 sostituite"}],"note":""},{"id":"s125","vehicleId":"v15","data":"2012-03-30","ore":7422,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE MASTERGOLD"},{"descrizione":"CAMBIO FILTRO ARIA MOTORE"},{"descrizione":"CAMBIO FILTRO ARIA COMPRESSORE"},{"descrizione":"CAMBIO CINGHIA ALTERNATORE"},{"descrizione":"CAMBIO BATTERIA"}],"note":""},{"id":"s126","vehicleId":"v15","data":"2014-05-03","ore":9028,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s127","vehicleId":"v15","data":"2016-09-08","ore":10790,"operazioni":[{"descrizione":"CAMBIO MOTORE NUOVO","nota":"80 CAMBIO OLIO E FILTRO"}],"note":""},{"id":"s128","vehicleId":"v15","data":"2016-12-01","ore":10930,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE","nota":"SOSTITUIRE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"}],"note":""},{"id":"s129","vehicleId":"v15","data":"2017-10-07","ore":11554,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s130","vehicleId":"v15","data":"2018-08-16","ore":12248,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s131","vehicleId":"v15","data":"2018-12-28","ore":12482,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s132","vehicleId":"v15","data":"2019-07-07","ore":12888,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s133","vehicleId":"v15","data":"2019-10-12","ore":12953,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE","nota":"CAMBIO FILTRO UFI CAUSA PERDITA"}],"note":""},{"id":"s134","vehicleId":"v15","data":"2020-04-08","ore":13348,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"PULIZIA RADIATORE"}],"note":""},{"id":"s135","vehicleId":"v15","data":"2020-11-02","ore":13649,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s136","vehicleId":"v15","data":"2021-05-02","ore":13914,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO RADIATORE RIGENNERATO"},{"descrizione":"GLICOLE NUOVO"}],"note":""},{"id":"s137","vehicleId":"v15","data":"2021-12-22","ore":14318,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"}],"note":""},{"id":"s138","vehicleId":"v15","data":"2022-04-24","ore":14697,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"BG 109E EPR PULIZIA IMPIANTO MOTORE"},{"descrizione":"DOC DISEL OIL PN112E (PER OLIO) ML 160"}],"note":""},{"id":"s139","vehicleId":"v15","data":"2023-01-11","ore":15138,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO GASOLIO"}],"note":""},{"id":"s140","vehicleId":"v15","data":"2023-06-22","ore":15484,"operazioni":[{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"CAMBIO BULBO RADIATORE","nota":"DITTA GOVI"}],"note":""},{"id":"s141","vehicleId":"v15","data":"2023-11-10","ore":15678,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"CAMBIO CINGHIA ALTERNATORE"},{"descrizione":"CAMBIO CINGHIA DISTRIBUZIONE","nota":"Distribuzione ogni 4000 ore"}],"note":""},{"id":"s142","vehicleId":"v15","data":"2024-05-14","ore":15966,"operazioni":[{"descrizione":"CAMBIO BULBO RADIATORE 60GRADI"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 NILS","nota":"OLIO NILS MISTRAL 15/40"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"BG 2476 ADDITIVO PER GASOLIO PULIZIA 1 BARATTOLO"}],"note":""},{"id":"s143","vehicleId":"v15","data":"2024-12-18","ore":16306,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE ORIGINALE"},{"descrizione":"BG 2426 ADDITIVO PER GASOLIO PULIZIA 1 BARATTOLO"}],"note":""},{"id":"s144","vehicleId":"v15","data":"2025-02-25","ore":16392,"operazioni":[{"descrizione":"CAMBIO RADIATORE NUOVO TURRINI"},{"descrizione":"MESSA A NORMA CARRO TURRINI"}],"note":""},{"id":"s145","vehicleId":"v16","data":"2012-07-30","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"CAMBIO MOTORE USATO"},{"descrizione":"CAMBIO POMPA GASOLIO"},{"descrizione":"CAMBIO POMPA ALTA PRESSIONE GASOLIO"},{"descrizione":"CAMBIO TUBI GASOLIO"},{"descrizione":"CAMBIO MARMITTA"}],"note":""},{"id":"s146","vehicleId":"v16","data":"2014-05-03","ore":null,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO MOTORE"}],"note":""},{"id":"s147","vehicleId":"v16","data":"2018-08-16","ore":null,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s148","vehicleId":"v16","data":"2019-10-20","ore":14520,"operazioni":[{"descrizione":"MOTORE FIFATTO"},{"descrizione":"AVANZAMENTO A NORMA"}],"note":""},{"id":"s149","vehicleId":"v16","data":"2020-04-08","ore":14749,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"}],"note":""},{"id":"s150","vehicleId":"v16","data":"2020-10-30","ore":15001,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO TUBO ASPIRAZIONE ARIA"}],"note":""},{"id":"s151","vehicleId":"v16","data":"2023-11-03","ore":15791,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s152","vehicleId":"v16","data":"2024-12-16","ore":16063,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"},{"descrizione":"RAB.OLIO IDRO 46 KG 20"}],"note":""},{"id":"s153","vehicleId":"v17","data":"2014-05-04","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s154","vehicleId":"v17","data":"2017-07-20","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO"},{"descrizione":"CAMBIO FILTRO GASOLIO"},{"descrizione":"PULIZIA SERBATOIO"},{"descrizione":"PULIZIA FILTRO POMPA G"}],"note":""},{"id":"s155","vehicleId":"v17","data":"2017-11-12","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"}],"note":""},{"id":"s156","vehicleId":"v17","data":"2018-08-16","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s157","vehicleId":"v17","data":"2020-01-11","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"INGRASSATA TOTALE"}],"note":""},{"id":"s158","vehicleId":"v17","data":"2022-01-04","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"}],"note":""},{"id":"s159","vehicleId":"v17","data":"2024-11-11","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"CAMBIO FILTRO OLIO"}],"note":""},{"id":"s160","vehicleId":"v18","data":"2012-03-04","ore":10939,"operazioni":[{"descrizione":"SOSTITUZIONE CINGHIA ALTERNATORE 10A1090C"},{"descrizione":"SOSTITUZIONE CINGHIA VENTOLA RAFFREDDAMENTO 10A1275 O AVX10X1275LA"},{"descrizione":"INGRASSATA E LUBRIFICATA TOTALE"}],"note":""},{"id":"s161","vehicleId":"v18","data":"2012-04-26","ore":10957,"operazioni":[{"descrizione":"CAMBIO GUARNIZIONI TESTATE"}],"note":""},{"id":"s162","vehicleId":"v18","data":"2013-05-26","ore":11080,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE","nota":"11600"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"CAMBIO CUSCINETTO TIRA CINGHIA A MOLLA"}],"note":""},{"id":"s163","vehicleId":"v18","data":"2017-12-21","ore":11543,"operazioni":[{"descrizione":"CAMBIO FILTRO OLIO MOTORE","nota":"12000"},{"descrizione":"INGRASSATA E LUBRIFICATA TOTALE"}],"note":""},{"id":"s164","vehicleId":"v18","data":"2019-12-02","ore":null,"operazioni":[{"descrizione":"CAMBIO MOTORINO AVVIAMENTO"},{"descrizione":"CAMBIO CINGHIA ALTERNATORE"},{"descrizione":"REVISIONE IMPIANTO ELETTRICO"}],"note":""},{"id":"s165","vehicleId":"v18","data":"2020-03-13","ore":11686,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"INGRASSATA E LUBRIFICATA TOTALE"}],"note":""},{"id":"s166","vehicleId":"v18","data":"2021-12-28","ore":11825,"operazioni":[{"descrizione":"REVISIONE MOTORE AMADESSI GALLI"},{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"INGRASSATA E LUBRIFICATA TOTALE"},{"descrizione":"RABBOCCO OLIO IDRAULICO"},{"descrizione":"CAMBIO GUARNIZIONI TESTA E VALVOLE"}],"note":""},{"id":"s167","vehicleId":"v18","data":"2023-03-08","ore":11879,"operazioni":[{"descrizione":"Lavaggio pulivapor"},{"descrizione":"INGRASSATA E LUBRIFICATA TOTALE"}],"note":""},{"id":"s168","vehicleId":"v18","data":"2024-05-22","ore":11891,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE"},{"descrizione":"INGRASSATA E LUBRIFICATA TOTALE"},{"descrizione":"CAMBIO FILTRO OLIO MOTORE"},{"descrizione":"BG 2476 ADDITIVO PER GASOLIO PULIZIA 1 BARATTOLO"}],"note":""},{"id":"s169","vehicleId":"v19","data":"2016-08-31","ore":65284,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 15/40 NORMALE"},{"descrizione":"REGISTRAZIONE CINGHIA ALTERNATORE"}],"note":""},{"id":"s170","vehicleId":"v20","data":"2020-03-29","ore":155770,"operazioni":[{"descrizione":"CAMBIO OLIO MOTORE 5/30 NORMALE"},{"descrizione":"FILTRO OLIO"},{"descrizione":"FILTRO ARIA"},{"descrizione":"FILTRO CARBURANTE"},{"descrizione":"FILTRO ABITACOLO"}],"note":""},{"id":"s171","vehicleId":"v20","data":"2020-04-08","ore":155770,"operazioni":[{"descrizione":"CAMBIO OLIO CAMBIO + ADDITIVO"}],"note":""},{"id":"s172","vehicleId":"v21","data":"2022-04-01","ore":93524,"operazioni":[{"descrizione":"BG PN 109E SOLVENTE PER MOTORE"},{"descrizione":"CAMBIO OLIO MOTORE 15/40 MINERALE OLEOBLITZ"},{"descrizione":"FILTRO OLIO"},{"descrizione":"FILTRO CARBURANTE"},{"descrizione":"CAMBIO BOMPA BENZINA"},{"descrizione":"SOSTITUZIONE CANDELE E CAVI GIANNI"},{"descrizione":"TRASFORMATORE DA 24 A 12VOLT PER POMPA"}],"note":""},{"id":"s173","vehicleId":"v22","data":"2020-04-03","ore":null,"operazioni":[{"descrizione":"CAMBIO OLIO 15/40 NORMALE"}],"note":""}];
+
+let syncTimer=null;
+let cloudPronto=false;
+let syncStarted=false;
+
+function datiManutenzioni(){
+  return {
+    vehicles:Array.isArray(ST.vehicles)?ST.vehicles:[],
+    operations:Array.isArray(ST.operations)?ST.operations:[],
+    sessions:Array.isArray(ST.sessions)?ST.sessions:[]
+  };
+}
+function normalizzaCloud(d){
+  if(typeof d==='string'){try{d=JSON.parse(d);}catch(e){d={};}}
+  const src=(d&&d.data)?d.data:(d&&d.state)?d.state:d;
+  return {
+    vehicles:Array.isArray(src&&src.vehicles)?src.vehicles:[],
+    operations:Array.isArray(src&&src.operations)?src.operations:[],
+    sessions:Array.isArray(src&&src.sessions)?src.sessions:[]
+  };
+}
+function datiVuoti(d){d=normalizzaCloud(d);return !d.vehicles.length&&!d.operations.length&&!d.sessions.length;}
+function setSyncStatus(testo,tipo=''){
+  const s=document.getElementById('sync-status'),d=document.getElementById('sync-dot');
+  if(!s||!d)return;
+  s.textContent=testo;
+  d.className='sync-dot'+(tipo?' '+tipo:'');
+}
+function salvaLocale(){try{localStorage.setItem('manutenzioni2025',JSON.stringify(ST));}catch(e){}}
+function save(){salvaLocale();if(syncStarted)pianificaSyncCloud();}
+function load(){
+  try{const d=localStorage.getItem('manutenzioni2025');
+    if(d){ST=JSON.parse(d);}
+    else{ST={vehicles:JSON.parse(JSON.stringify(DEF_V)),operations:JSON.parse(JSON.stringify(DEF_OPS)),sessions:JSON.parse(JSON.stringify(DEF_S))};salvaLocale();}
+  }catch(e){ST={vehicles:JSON.parse(JSON.stringify(DEF_V)),operations:JSON.parse(JSON.stringify(DEF_OPS)),sessions:JSON.parse(JSON.stringify(DEF_S))};salvaLocale();}
+}
+function caricaDaCloud(){
+  return new Promise((resolve,reject)=>{
+    const cb='manutenzioniCloudCallback_'+Date.now();
+    const script=document.createElement('script');
+    const timeout=setTimeout(()=>{cleanup();reject(new Error('Tempo scaduto'));},15000);
+    function cleanup(){clearTimeout(timeout);try{delete window[cb];}catch(e){window[cb]=undefined;}if(script.parentNode)script.parentNode.removeChild(script);}
+    window[cb]=(res)=>{cleanup();if(res&&res.ok)resolve(normalizzaCloud(res));else reject(new Error('Risposta cloud non valida'));};
+    script.onerror=()=>{cleanup();reject(new Error('Errore collegamento cloud'));};
+    script.src=CLOUD_URL+'?callback='+encodeURIComponent(cb)+'&key=manutenzioni2025&t='+Date.now();
+    document.body.appendChild(script);
+  });
+}
+async function salvaSuCloud(){
+  try{
+    setSyncStatus('Sincronizzazione in corso...','warn');
+    await fetch(CLOUD_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:'manutenzioni2025',data:datiManutenzioni(),state:datiManutenzioni(),updatedAt:Date.now()})});
+    setSyncStatus('Sincronizzato con Google Sheets','ok');
+  }catch(e){
+    setSyncStatus('Non sincronizzato: dati salvati su questo dispositivo','err');
+  }
+}
+function pianificaSyncCloud(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(()=>salvaSuCloud(),800);}
+async function avviaCloud(){
+  setSyncStatus('Collegamento a Google Sheets...','warn');
+  const locali=datiManutenzioni();
+  try{
+    const cloud=await caricaDaCloud();
+    cloudPronto=true;
+    syncStarted=true;
+    if(datiVuoti(cloud)&&!datiVuoti(locali)){
+      await salvaSuCloud();
+      setSyncStatus('Dati locali caricati su Google Sheets','ok');
+      return;
+    }
+    if(!datiVuoti(cloud)){
+      ST=normalizzaCloud(cloud);
+      salvaLocale();
+      renderHome();renderOps();if(curVid)renderDetail();
+      setSyncStatus('Dati caricati da Google Sheets','ok');
+      return;
+    }
+    setSyncStatus('Google Sheets collegato, archivio vuoto','ok');
+  }catch(e){
+    cloudPronto=false;
+    syncStarted=true;
+    setSyncStatus('Cloud non raggiungibile: uso dati del dispositivo','err');
+  }
+}
+async function forzaSincronizzazione(){salvaLocale();await salvaSuCloud();toast('✓ Sincronizzazione inviata');}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function fd(d){if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;}
+function oreLabel(o){if(o===null||o===undefined)return'ore n.d.';return(typeof o==='number'?o.toLocaleString('it-IT')+' ore':String(o));}
+function lastSess(vid){return ST.sessions.filter(s=>s.vehicleId===vid).sort((a,b)=>b.data.localeCompare(a.data))[0]||null;}
+
+// NAV
+function navTo(id){
+  const cur=document.querySelector('.screen.active');
+  cur&&cur.classList.add('prev');setTimeout(()=>cur&&cur.classList.remove('prev'),350);
+  cur&&cur.classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  navStack.push(cur?cur.id:'sHome');
+}
+function navBack(){
+  const prev=navStack.pop()||'sHome';
+  document.querySelector('.screen.active').classList.remove('active');
+  document.getElementById(prev).classList.add('active');
+}
+function switchTab(i){
+  document.getElementById('tab1').classList.toggle('on',i===0);
+  document.getElementById('tab2').classList.toggle('on',i===1);
+  if(i===0){document.getElementById('sOps').classList.remove('active');document.getElementById('sHome').classList.add('active');renderHome();}
+  else{document.getElementById('sHome').classList.remove('active');document.getElementById('sOps').classList.add('active');renderOps();}
+  navStack=[];
+}
+
+// TOAST
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
+
+// MODALS
+function closeModal(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('show'));}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal();}));
+function confirm2(title,msg,cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  document.getElementById('confirmBtn').onclick=()=>{cb();closeModal();};
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+// HOME
+function renderHome(){
+  const q=(document.getElementById('homeQ').value||'').toLowerCase();
+  const groups={};
+  ST.vehicles.filter(v=>v.name.toLowerCase().includes(q)||TNAME[v.type].toLowerCase().includes(q)).forEach(v=>{
+    if(!groups[v.type])groups[v.type]=[];groups[v.type].push(v);
+  });
+  let html='<div style="padding:10px 0 24px">',any=false;
+  TORD.forEach(t=>{
+    if(!groups[t]||!groups[t].length)return;any=true;
+    html+=`<div class="section-label">${TNAME[t]}</div><div class="vlist">`;
+    groups[t].forEach(v=>{
+      const cnt=ST.sessions.filter(s=>s.vehicleId===v.id).length;
+      const last=lastSess(v.id);
+      html+=`<div class="vcard" onclick="openVehicle('${v.id}')">
+        <div class="vcard-icon ic-${t}">${TICO[t]||'🔧'}</div>
+        <div class="vcard-body"><div class="vcard-name">${v.name}</div>
+        <div class="vcard-meta">${cnt} intervent${cnt!==1?'i':'o'} ${last?'· '+fd(last.data):''}</div></div>
+        <span style="font-size:16px;color:var(--text-light)">›</span>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  if(!any)html+='<div class="empty"><div class="empty-icon">🔍</div><div style="font-size:15px">Nessuna macchina trovata</div></div>';
+  document.getElementById('homeContent').innerHTML=html+'</div>';
+}
+
+// DETAIL
+function openVehicle(vid){
+  curVid=vid;
+  document.getElementById('detailName').textContent=ST.vehicles.find(x=>x.id===vid).name;
+  renderDetail();navTo('sDetail');
+}
+function renderDetail(){
+  const ss=ST.sessions.filter(s=>s.vehicleId===curVid).sort((a,b)=>b.data.localeCompare(a.data));
+  const cnt=ss.length,tot=ss.reduce((a,s)=>a+s.operazioni.length,0);
+  document.getElementById('detailMeta').textContent=`${cnt} intervent${cnt!==1?'i':'o'}`;
+  document.getElementById('statsBar').innerHTML=`
+    <div class="stat"><div class="stat-val">${cnt}</div><div class="stat-label">Interventi</div></div>
+    <div class="stat"><div class="stat-val">${tot}</div><div class="stat-label">Operazioni tot.</div></div>
+    <div class="stat"><div class="stat-val">${ss[0]?fd(ss[0].data):'—'}</div><div class="stat-label">Ultimo</div></div>`;
+  let html='<div style="padding:12px 0 80px">';
+  if(!ss.length)html+='<div class="empty"><div class="empty-icon">📋</div><div style="font-size:15px">Nessun intervento — tocca + per aggiungerne uno</div></div>';
+  ss.forEach(s=>{
+    html+=`<div class="scard">
+      <div class="scard-head">
+        <div style="flex:1"><div class="scard-date">📅 ${fd(s.data)}</div>
+        <div class="scard-ore">⏱ ${oreLabel(s.ore)} · ${s.operazioni.length} operaz.</div></div>
+        <div class="arow">
+          <button class="btn btn-warning btn-sm" onclick="openEditSession('${s.id}')">✏️ Modifica</button>
+          <button class="btn btn-danger btn-sm" onclick="delSession('${s.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="scard-body">`;
+    s.operazioni.forEach(op=>{
+      html+=`<div class="op-item"><div class="op-dot"></div><div class="op-content"><div class="op-desc">${op.descrizione}</div>`;
+      if(op.nota)html+=`<div class="op-nota">ℹ️ ${op.nota}</div>`;
+      if(op.codice)html+=`<span class="op-codice">📦 ${op.codice}</span>`;
+      html+=`</div></div>`;
+    });
+    if(s.note)html+=`<div class="scard-note">📝 ${s.note}</div>`;
+    html+=`</div></div>`;
+  });
+  document.getElementById('detailContent').innerHTML=html+'</div>';
+}
+function delSession(sid){
+  const s=ST.sessions.find(x=>x.id===sid);
+  confirm2('Elimina intervento',`Eliminare l'intervento del ${fd(s.data)} con ${s.operazioni.length} operazioni?\nL'azione non è reversibile.`,()=>{
+    ST.sessions=ST.sessions.filter(x=>x.id!==sid);save();renderDetail();renderHome();toast('Intervento eliminato');
+  });
+}
+
+// ADD / EDIT SESSION
+function openAddSession(){editSid=null;selOps=[];custOps=[];document.getElementById('addTitle').textContent='Nuovo Intervento';buildSessionForm(null);navTo('sAdd');}
+function openEditSession(sid){
+  const s=ST.sessions.find(x=>x.id===sid);
+  editSid=sid;selOps=[];custOps=[];
+  s.operazioni.forEach(op=>{
+    const found=ST.operations.find(o=>o.name===op.descrizione);
+    if(found){selOps.push(found.id);}
+    else{custOps.push({descrizione:op.descrizione,nota:op.nota||'',attiva:true});}
+  });
+  document.getElementById('addTitle').textContent='Modifica Intervento';
+  buildSessionForm(s);navTo('sAdd');
+}
+function buildSessionForm(ex){
+  const today=new Date().toISOString().slice(0,10);
+  const dataVal=ex?ex.data:today;
+  const oreVal=ex&&ex.ore!==null?ex.ore:'';
+  const noteVal=ex?ex.note:'';
+  const opsHtml=ST.operations.map(op=>{
+    const sel=selOps.includes(op.id);
+    return`<div class="op-check${sel?' sel':''}" id="ck_${op.id}" onclick="togOp('${op.id}')">
+      <div class="chkbox" id="cb_${op.id}">${sel?'✓':''}</div>
+      <div class="op-check-name">${op.name}</div>
+      <span class="op-check-code">${op.code}</span>
+      <div class="arow" style="margin-left:auto">
+        <button type="button" class="btn btn-warning btn-sm" onclick="event.stopPropagation();showEditOp('${op.id}')">✏️</button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="event.stopPropagation();delOp('${op.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('addContent').innerHTML=`<div style="padding-bottom:12px">
+    <div class="form-block"><div class="form-row">
+      <div class="form-label">DATA INTERVENTO</div>
+      <input class="form-input" type="date" id="fData" value="${dataVal}">
+    </div></div>
+    <div class="form-block" style="margin-top:2px"><div class="form-row">
+      <div class="form-label">ORE MOTORE / KM</div>
+      <input class="form-input" type="number" id="fOre" placeholder="es. 5387 (lascia vuoto se sconosciuto)" value="${oreVal}">
+    </div></div>
+    <div class="dsec" style="margin-top:10px"></div>
+    <div class="form-block"><div class="form-row">
+      <div class="form-label" style="margin-bottom:10px">OPERAZIONI DAL CATALOGO</div>
+      <div class="ops-grid">${opsHtml}</div>
+    </div></div>
+    <div class="form-block" style="margin-top:2px"><div class="form-row">
+      <div class="form-label">OPERAZIONI PERSONALIZZATE</div>
+      <div id="custList"></div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+        <input class="form-input" id="custDesc" placeholder="Descrizione operazione...">
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="custNota" placeholder="Prodotto / codice (opzionale)..." style="flex:1">
+          <button class="btn btn-primary" onclick="addCust()" style="flex-shrink:0">＋</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="dsec" style="margin-top:10px"></div>
+    <div class="form-block"><div class="form-row">
+      <div class="form-label">NOTE GENERALI</div>
+      <textarea class="form-input" id="fNote" placeholder="Note aggiuntive, anomalie, avvisi...">${noteVal}</textarea>
+    </div></div>
+    <div class="add-savebar">
+      <button type="button" class="btn" onclick="closeAddScreen()">Annulla</button>
+      <button type="button" class="btn btn-primary" onclick="saveSession()">Salva intervento</button>
+    </div>
+  </div>`;
+  renderCust();
+}
+function togOp(id){
+  const el=document.getElementById('ck_'+id),cb=document.getElementById('cb_'+id);
+  if(selOps.includes(id)){selOps=selOps.filter(x=>x!==id);el.classList.remove('sel');cb.textContent='';}
+  else{selOps.push(id);el.classList.add('sel');cb.textContent='✓';}
+}
+function addCust(){
+  const d=document.getElementById('custDesc'),n=document.getElementById('custNota');
+  if(!d.value.trim())return;
+  custOps.push({descrizione:d.value.trim(),nota:n.value.trim(),attiva:true});
+  d.value='';n.value='';renderCust();
+}
+function renderCust(){
+  const c=document.getElementById('custList');if(!c)return;
+  if(!custOps.length){c.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:6px 0">Nessuna operazione personalizzata inserita</div>';return;}
+  c.innerHTML=custOps.map((o,i)=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div class="chkbox" onclick="togCust(${i})" style="flex-shrink:0;cursor:pointer;${o.attiva===false?'':'background:var(--blue);border-color:var(--blue);color:#fff'}">${o.attiva===false?'':'✓'}</div>
+      <div style="flex:1"><div style="font-size:14px;${o.attiva===false?'color:var(--text-muted);text-decoration:line-through':''}">${o.descrizione}</div>${o.nota?`<div style="font-size:12px;color:var(--text-muted)">ℹ️ ${o.nota}</div>`:''}</div>
+      <div class="arow" style="flex-shrink:0">
+        <button type="button" class="btn btn-warning btn-sm" onclick="editCust(${i})">✏️</button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="delCust(${i})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+function togCust(i){
+  if(!custOps[i])return;
+  custOps[i].attiva=custOps[i].attiva===false?true:false;
+  renderCust();
+}
+function editCust(i){
+  const o=custOps[i];if(!o)return;
+  const d=prompt('Modifica descrizione operazione',o.descrizione||'');
+  if(d===null)return;
+  const desc=d.trim();
+  if(!desc){toast('Descrizione vuota ⚠️');return;}
+  const n=prompt('Modifica prodotto / codice / nota',o.nota||'');
+  if(n===null)return;
+  custOps[i]={...o,descrizione:desc,nota:n.trim(),attiva:o.attiva!==false};
+  renderCust();
+}
+function delCust(i){
+  const o=custOps[i];if(!o)return;
+  confirm2('Elimina operazione personalizzata',`Eliminare "${o.descrizione}"?\nL'azione non è reversibile.`,()=>{
+    custOps.splice(i,1);renderCust();toast('Operazione personalizzata eliminata');
+  });
+}
+
+function closeAddScreen(){
+  const add=document.getElementById('sAdd');
+  if(add)add.classList.remove('active','prev');
+
+  document.querySelectorAll('.screen').forEach(s=>{
+    if(s.id!=='sDetail' && s.id!=='sHome') s.classList.remove('active','prev');
+  });
+
+  if(curVid){
+    const detail=document.getElementById('sDetail');
+    if(detail)detail.classList.add('active');
+    renderDetail();
+  }else{
+    const home=document.getElementById('sHome');
+    if(home)home.classList.add('active');
+    renderHome();
+  }
+
+  navStack=[];
+}
+
+function saveSession(){
+  const data=document.getElementById('fData').value;
+  const oreRaw=document.getElementById('fOre').value.trim();
+  const note=document.getElementById('fNote').value.trim();
+  if(!data){toast('Inserisci la data ⚠️');return;}
+  const ops=[];
+  selOps.forEach(oid=>{const op=ST.operations.find(x=>x.id===oid);if(op)ops.push({descrizione:op.name});});
+  custOps.filter(o=>o.attiva!==false).forEach(o=>ops.push({descrizione:o.descrizione,...(o.nota?{nota:o.nota}:{})}));
+  if(!ops.length){toast('Seleziona almeno un\'operazione ⚠️');return;}
+  const ore=oreRaw?(parseInt(oreRaw)||oreRaw):null;
+  if(editSid){
+    const i=ST.sessions.findIndex(x=>x.id===editSid);
+    if(i>=0)ST.sessions[i]={...ST.sessions[i],data,ore,operazioni:ops,note};
+    toast('✅ Intervento aggiornato!');
+  }else{
+    ST.sessions.push({id:'s'+uid(),vehicleId:curVid,data,ore,operazioni:ops,note});
+    toast('✅ Intervento salvato!');
+  }
+  save();closeAddScreen();renderDetail();renderHome();
+}
+
+// OPERATIONS
+function renderOps(){
+  const q=(document.getElementById('opsQ')?document.getElementById('opsQ').value||'':'').toLowerCase();
+  const ops=ST.operations.filter(o=>o.name.toLowerCase().includes(q)||o.code.toLowerCase().includes(q));
+  let html='<div style="padding:12px;display:flex;flex-direction:column;gap:8px;padding-bottom:40px"><button class="btn btn-primary" onclick="showAddVehicle()" style="justify-content:center;margin-bottom:8px">＋ Nuovo mezzo</button><div style="font-size:12px;color:var(--text-muted);padding:0 2px 6px">Qui puoi creare, modificare ed eliminare i mezzi. L\'eliminazione chiede sempre conferma.</div>';
+  if(!ops.length)html+='<div class="empty"><div class="empty-icon">🔍</div><div style="font-size:15px">Nessuna operazione trovata</div></div>';
+  ops.forEach(op=>{
+    html+=`<div class="opcard">
+      <span class="op-code-pill">${op.code}</span>
+      <div style="flex:1;font-size:14px;font-weight:500">${op.name}</div>
+      <div class="arow">
+        <button class="btn btn-warning btn-sm" onclick="showEditOp('${op.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="delOp('${op.id}')">🗑</button>
+      </div>
+    </div>`;
+  });
+  html+=`<div style="text-align:center;padding:16px 0"><button class="btn btn-ghost" onclick="showAddOp()">＋ Aggiungi operazione</button></div></div>`;
+  const el=document.getElementById('opsContent');if(el)el.innerHTML=html;
+}
+function showAddOp(){
+  editOpId=null;
+  document.getElementById('opModalTitle').textContent='Nuova Operazione';
+  document.getElementById('opCode').value='';document.getElementById('opName').value='';
+  document.getElementById('opSaveBtn').textContent='Aggiungi';
+  document.getElementById('opModal').classList.add('show');
+  setTimeout(()=>document.getElementById('opCode').focus(),300);
+}
+function showEditOp(id){
+  const op=ST.operations.find(x=>x.id===id);if(!op)return;
+  editOpId=id;
+  document.getElementById('opModalTitle').textContent='Modifica Operazione';
+  document.getElementById('opCode').value=op.code;document.getElementById('opName').value=op.name;
+  document.getElementById('opSaveBtn').textContent='Aggiorna';
+  document.getElementById('opModal').classList.add('show');
+  setTimeout(()=>document.getElementById('opCode').focus(),300);
+}
+function saveOp(){
+  const code=document.getElementById('opCode').value.trim().toUpperCase();
+  const name=document.getElementById('opName').value.trim().toUpperCase();
+  if(!code||!name){toast('Compila tutti i campi ⚠️');return;}
+  if(editOpId){
+    if(ST.operations.find(o=>o.code===code&&o.id!==editOpId)){toast('Codice già esistente ⚠️');return;}
+    const i=ST.operations.findIndex(x=>x.id===editOpId);
+    if(i>=0)ST.operations[i]={...ST.operations[i],code,name};
+    toast('✅ Operazione aggiornata!');
+  }else{
+    if(ST.operations.find(o=>o.code===code)){toast('Codice già esistente ⚠️');return;}
+    ST.operations.push({id:'op'+uid(),code,name});toast('✅ Operazione aggiunta!');
+  }
+  save();closeModal();
+  if(document.getElementById('sAdd').classList.contains('active'))buildSessionForm(currentSessionDraft());
+  renderOps();
+}
+function currentSessionDraft(){
+  const d=document.getElementById('fData'),o=document.getElementById('fOre'),n=document.getElementById('fNote');
+  return {data:d?d.value:new Date().toISOString().slice(0,10),ore:o?o.value:'',note:n?n.value:''};
+}
+function delOp(id){
+  const op=ST.operations.find(x=>x.id===id);if(!op)return;
+  confirm2('Elimina operazione',`Eliminare "${op.name}" (${op.code})?\nSe era selezionata nell'intervento verrà tolta dalla lista.\nL'azione non è reversibile.`,()=>{
+    ST.operations=ST.operations.filter(x=>x.id!==id);
+    selOps=selOps.filter(x=>x!==id);
+    save();
+    if(document.getElementById('sAdd').classList.contains('active'))buildSessionForm(currentSessionDraft());
+    renderOps();toast('Operazione eliminata');
+  });
+}
+
+// VEHICLES MANAGE
+function renderVehicles(){
+  let html='<div style="padding:12px;display:flex;flex-direction:column;gap:8px;padding-bottom:40px"><button class="btn btn-primary" onclick="showAddVehicle()" style="justify-content:center;margin-bottom:8px">＋ Nuovo mezzo</button><div style="font-size:12px;color:var(--text-muted);padding:0 2px 6px">Qui puoi creare, modificare ed eliminare i mezzi. L\'eliminazione chiede sempre conferma.</div>';
+  ST.vehicles.forEach(v=>{
+    const cnt=ST.sessions.filter(s=>s.vehicleId===v.id).length;
+    html+=`<div class="vcard" style="cursor:default">
+      <div class="vcard-icon ic-${v.type}">${TICO[v.type]||'🔧'}</div>
+      <div class="vcard-body"><div class="vcard-name">${v.name}</div>
+      <div class="vcard-meta">${TNAME[v.type]||v.type} · ${cnt} interventi</div></div>
+      <div class="arow">
+        <button class="btn btn-warning btn-sm" onclick="showEditVehicle('${v.id}')">✏️ Modifica</button>
+        <button class="btn btn-danger btn-sm" onclick="delVehicle('${v.id}')">🗑 Elimina</button>
+      </div>
+    </div>`;
+  });
+  html+=`<div style="text-align:center;padding:16px 0"><button class="btn btn-ghost" onclick="showAddVehicle()">＋ Aggiungi nuovo mezzo</button></div></div>`;
+  document.getElementById('vehiclesContent').innerHTML=html;
+}
+function showAddVehicle(){
+  editVid=null;
+  document.getElementById('vModalTitle').textContent='Nuovo Mezzo';
+  document.getElementById('vName').value='';document.getElementById('vType').value='trattore';
+  document.getElementById('vSaveBtn').textContent='Aggiungi';
+  document.getElementById('vModal').classList.add('show');
+  setTimeout(()=>document.getElementById('vName').focus(),300);
+}
+function showEditVehicle(id){
+  const v=ST.vehicles.find(x=>x.id===id);if(!v)return;
+  editVid=id;
+  document.getElementById('vModalTitle').textContent='Modifica Macchina';
+  document.getElementById('vName').value=v.name;document.getElementById('vType').value=v.type;
+  document.getElementById('vSaveBtn').textContent='Aggiorna';
+  document.getElementById('vModal').classList.add('show');
+  setTimeout(()=>document.getElementById('vName').focus(),300);
+}
+function saveVehicle(){
+  const name=document.getElementById('vName').value.trim();
+  const type=document.getElementById('vType').value;
+  if(!name){toast('Inserisci il nome ⚠️');return;}
+  if(editVid){
+    const i=ST.vehicles.findIndex(x=>x.id===editVid);
+    if(i>=0)ST.vehicles[i]={...ST.vehicles[i],name:name.toUpperCase(),type};
+    toast('✅ Mezzo aggiornato!');
+  }else{
+    ST.vehicles.push({id:'v'+uid(),name:name.toUpperCase(),type});toast('✅ Mezzo aggiunto!');
+  }
+  save();closeModal();renderVehicles();renderHome();
+}
+function delVehicle(id){
+  const v=ST.vehicles.find(x=>x.id===id);
+  const cnt=ST.sessions.filter(s=>s.vehicleId===id).length;
+  confirm2('Elimina mezzo',`Eliminare "${v.name}"?\nVerranno eliminati anche tutti i ${cnt} interventi.\nL'azione non è reversibile.`,()=>{
+    ST.vehicles=ST.vehicles.filter(x=>x.id!==id);
+    ST.sessions=ST.sessions.filter(x=>x.vehicleId!==id);
+    save();renderVehicles();renderHome();toast('Mezzo eliminato');
+  });
+}
+
+// BUTTON WIRING
+document.getElementById('btnGoVehicles').onclick=()=>{renderVehicles();navTo('sVehicles');};
+document.getElementById('btnBackVehicles').onclick=navBack;
+document.getElementById('btnBackDetail').onclick=navBack;
+document.getElementById('btnCancelAdd').onclick=closeAddScreen;
+document.getElementById('btnAddSession').onclick=openAddSession;
+document.getElementById('btnSaveSession').onclick=saveSession;
+document.getElementById('btnAddOp').onclick=showAddOp;
+document.getElementById('btnAddVehicle').onclick=showAddVehicle;
+document.getElementById('opSaveBtn').onclick=saveOp;
+document.getElementById('vSaveBtn').onclick=saveVehicle;
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(document.getElementById('opModal').classList.contains('show'))saveOp();
+    if(document.getElementById('vModal').classList.contains('show'))saveVehicle();
+  }
+});
+
+load();renderHome();avviaCloud();
+</script>
+</body>
+</html>
